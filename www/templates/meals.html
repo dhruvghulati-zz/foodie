@@ -1,0 +1,39 @@
+<ion-view view-title="Meals">
+  <ion-content>
+    <!--Search bar-->
+    <label class="item item-input">
+      <i class="icon ion-search placeholder-icon"></i>
+      <input type="search" placeholder="Search">
+    </label>
+
+          <ion-tabs class="tabs-top">
+
+              <!-- Tab 1 -->
+              <ion-tab title="Nearest">
+                  <ion-view>
+                      <div ng-include src="'templates/map.html'"></div>
+                  </ion-view>
+              </ion-tab>
+
+
+              <!-- Tab 2 -->
+              <ion-tab title="Favourites" href="#/meals/favourites">
+                  <ion-nav-view name="tab-tab2">
+                  </ion-nav-view>
+              </ion-tab>
+              <!-- Tab 2 -->
+              <ion-tab title="Popular" href="#/meals/popular">
+                  <ion-nav-view name="tab-tab2">
+                  </ion-nav-view>
+              </ion-tab>
+          </ion-tabs>
+          <ion-list>
+              <a class="item item-thumbnail-left" ng-repeat="meal in meals" href="#/app/meals/{{meal.id}}">
+                  <img ng-src={{meal.img}}>
+                  <h2>{{meal.name}}</h2>
+                  <p>{{meal.price}}</p>
+                  <p>{{meal.like}}</p>
+              </a>
+          </ion-list>
+  </ion-content>
+</ion-view>
