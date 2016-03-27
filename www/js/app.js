@@ -4,11 +4,11 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 // 'starter.controllers' is found in controllers.js
-angular.module('foodapp', ['ionic', 'foodapp.controllers','foodapp.services','firebase','ngCordova'])
+angular.module('foodapp', ['ionic', 'foodapp.controllers', 'foodapp.services', 'angular-md5','firebase', 'ngCordova'])
     .constant('FirebaseUrl', 'https://foodsharingapp.firebaseio.com/')
     .service('rootRef', ['FirebaseUrl', Firebase])
 
-    .run(function ($ionicPlatform) {
+    .run(function ($ionicPlatform, $rootScope, $firebaseAuth, $firebase, $window, $ionicLoading) {
         $ionicPlatform.ready(function () {
             // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
             // for form inputs)
@@ -21,22 +21,78 @@ angular.module('foodapp', ['ionic', 'foodapp.controllers','foodapp.services','fi
                 // org.apache.cordova.statusbar required
                 StatusBar.styleDefault();
             }
+
+            $rootScope.show = function(text) {
+                $rootScope.loading = $ionicLoading.show({
+                    content: text ? text : 'Loading..',
+                    animation: 'fade-in',
+                    showBackdrop: true,
+                    maxWidth: 200,
+                    showDelay: 0
+                });
+            };
+
+            $rootScope.hide = function() {
+                $ionicLoading.hide();
+            };
+
+            $rootScope.notify = function(text) {
+                $rootScope.show(text);
+                $window.setTimeout(function() {
+                    $rootScope.hide();
+                }, 1999);
+            };
+
+            $rootScope.user;
+
         });
     })
 
     .config(function ($stateProvider, $urlRouterProvider) {
         $stateProvider
 
-            .state('login', {
-                url: '/login',
-                controller: 'LoginCtrl as ctrl',
-                templateUrl: 'templates/login.html'
+            .state('auth', {
+                url: "/auth",
+                abstract: true,
+                templateUrl: "templates/auth.html"
             })
 
-            .state('signup', {
+            .state('auth.login', {
+                url: '/login',
+                views: {
+                    'auth-signin': {
+                        controller: 'LoginCtrl as ctrl',
+                        templateUrl: 'templates/login.html'
+                    }
+                },
+                resolve: {
+                    requireNoAuth: function($state, Auth){
+                        return Auth.$requireAuth().then(function(auth){
+                            $state.go('app.meals');
+                        }, function(error){
+                            return;
+                        });
+                    }
+                }
+            })
+
+            .state('auth.signup', {
                 url: '/signup',
-                templateUrl: 'templates/signup.html',
-                controller: 'SignUpCtrl'
+                views: {
+                    'auth-signup': {
+                        controller: 'SignUpCtrl',
+                        templateUrl: 'templates/signup.html'
+                    }
+                },
+                resolve: {
+                    requireNoAuth: function($state, Auth){
+                        return Auth.$requireAuth().then(function(auth){
+                            $state.go('app.meals');
+                        }, function(error){
+                            return;
+                        });
+                    }
+                }
             })
 
             .state('app', {
@@ -94,10 +150,22 @@ angular.module('foodapp', ['ionic', 'foodapp.controllers','foodapp.services','fi
             })
             .state('app.profile', {
                 url: '/profile',
+                resolve: {
+                    auth: function($state, Users, Auth){
+                        return Auth.$requireAuth().catch(function(){
+                            $state.go('auth.login');
+                        });
+                    },
+                    profile: function(Users, Auth){
+                        return Auth.$requireAuth().then(function(auth){
+                            return Users.getProfile(auth.uid).$loaded();
+                        });
+                    }
+                },
                 views: {
                     'menuContent': {
                         templateUrl: 'templates/profile.html',
-                        controller: 'ProfileCtrl'
+                        controller: 'ProfileCtrl as profileCtrl'
                     }
                 }
             })
@@ -106,7 +174,7 @@ angular.module('foodapp', ['ionic', 'foodapp.controllers','foodapp.services','fi
                 views: {
                     'menuContent': {
                         templateUrl: 'templates/map.html',
-                        controller: 'MapCtrl'
+                        controller: 'MarkerRemoveCtrl'
                     }
                 }
             })

@@ -1,13 +1,12 @@
 <ion-view view-title="Profile">
-    <ion-content id="page-profile" class="header-background" scroll="true">
-        <ion-header-bar align-title="center">
-        </ion-header-bar>
+    <ion-content class="has-header">
         <div class="box">
             <div class="info">
                 <div class="avatar">
                     <img src="img/avatar.jpg" alt="avatar"/>
                 </div>
-                <h2 class="name">Beverly Williams</h2>
+                <pre> {{user | json}} </pre>
+                <h2 class="name">{{user.firstname}}</h2>
                 <div class="position">UX/UI App Designer</div>
                 <div class="links">
                     <div class="row">
@@ -37,7 +36,37 @@
                         </button>
                     </div>
                 </div>
-
+                <!--Start of the location ticker-->
+                <div class="list">
+                    <label class="item item-input">
+                        <input type="text" placeholder="Enter your Pickup Location" location-suggestion
+                               location="location"
+                               ng-model="location.formatted_address">
+                    </label>
+                </div>
+                <script id="location.html" type="text/ng-template">
+                    <ion-modal-view>
+                        <ion-header-bar class="item-input-inset">
+                            <label class="item-input-wrapper">
+                                <i class="icon ion-ios7-search placeholder-icon"></i>
+                                <input type="search" ng-model="search.query" placeholder="Search">
+                            </label>
+                        </ion-header-bar>
+                        <ion-content>
+                            <ion-list>
+                                <ion-item ng-show="search.error">
+                                    {{search.error}}
+                                </ion-item>
+                                <ion-item ng-repeat="suggestion in search.suggestions"
+                                          ng-click="choosePlace(suggestion)">
+                                    {{suggestion.description}}
+                                </ion-item>
+                            </ion-list>
+                            <img src="https://developers.google.com/maps/documentation/places/images/powered-by-google-on-white.png"
+                                 alt=""/>
+                        </ion-content>
+                    </ion-modal-view>
+                </script>
             </div>
         </div>
     </ion-content>

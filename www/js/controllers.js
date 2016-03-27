@@ -1,139 +1,368 @@
-angular.module('foodapp.controllers', [])
+angular.module('foodapp.controllers', ['ngMap'])
 
-    .controller('AppCtrl', function ($scope, $ionicModal, $timeout) {
+    /**
+     * This controls the items in the menu bar.
+     */
+    .controller('AppCtrl', function ($state, $scope, $ionicPopup, $location, Auth) {
 
-        //Is AppCtrl available for all?
+        $scope.logout = function () {
+            var confirmPopup = $ionicPopup.confirm({
+                title: 'Logout',
+                template: 'Are you sure you want to logout?'
+            });
 
-        // With the new view caching in Ionic, Controllers are only called
-        // when they are recreated or on app start, instead of every page change.
-        // To listen for when this page is active (for example, to refresh data),
-        // listen for the $ionicView.enter event:
-        //$scope.$on('$ionicView.enter', function(e) {
-        //});
-
-        // Form data for the login modal
-        $scope.loginData = {};
-
-        // Create the login modal that we will use later
-        $ionicModal.fromTemplateUrl('templates/login.html', {
-            scope: $scope
-        }).then(function (modal) {
-            $scope.modal = modal;
-        });
-
-        // Triggered in the login modal to close it
-        $scope.closeLogin = function () {
-            $scope.modal.hide();
-        };
-
-        // Open the login modal
-        $scope.login = function () {
-            $scope.modal.show();
-        };
-
-        // Perform the login action when the user submits the login form
-        $scope.doLogin = function () {
-            console.log('Doing login', $scope.loginData);
-
-            // Simulate a login delay. Remove this and replace with your login
-            // code if using a login system
-            $timeout(function () {
-                $scope.closeLogin();
-            }, 1000);
-        };
-
-        $scope.goBack = function () {
-            window.history.back();
+            confirmPopup.then(function (res) {
+                if (res) {
+                    console.log('You are sure');
+                    //Auth.logout();
+                    Auth.$unauth();
+                    $state.go('auth.login');
+                    console.log(Auth.$getAuth())
+                } else {
+                    console.log('You are not sure');
+                    console.log(Auth.$getAuth())
+                    $state.go($location.path('app/meals'));
+                }
+            });
         };
 
     })
 
-    .controller('MealsCtrl', function ($scope, $ionicModal, $timeout, $state, Meals) {
+    .controller('LocationCtrl', function ($scope) {
+        $scope.location = {};
+    })
 
-        $scope.goMap = function(){
+    .controller('MealsCtrl', function (Auth, $scope, $rootScope, $window,$ionicModal, $timeout, $state, Meals, MealsFromDB) {
+        console.log($window.localStorage['profile']);
+
+        $scope.goMap = function () {
             $state.go("app.map");
         };
 
-        $scope.goFav = function(){
+        $scope.goFav = function () {
             $state.go("app.fav");
         };
 
-        $scope.goPop = function(){
+        $scope.goPop = function () {
             $state.go("app.pop");
         };
 
+        $scope.meals = MealsFromDB.all();
+
         //No meals by category, this is all meals
-        $scope.meals = Meals.all();
-
-        $ionicModal.fromTemplateUrl('templates/meal.html', {
-            scope: $scope
-        }).then(function (modal) {
-            $scope.modal = modal;
-        });
-        // Triggered in the product modal to close it
-        $scope.closeModal = function () {
-            $scope.modal.hide();
-        };
-
-        $scope.doOrder = function () {
-            $state.go("app.orders");
-            $timeout(function () {
-                $scope.closeModal();
-            }, 1000);
-        };
-
-        // Click like product
-        $scope.doLike = function(){
-            var btn_like = angular.element(document.querySelector('.product-like'));
-            btn_like.find('i').toggleClass('active');
-        }
-        // Open the product modal
-        $scope.mealDetail = function ($id) {
-            $scope.meal = Meals.get($id);
-            $scope.modal.show();
-        };
-
-        $scope.goBack = function () {
-            window.history.back();
-        };
-
-        //$scope.meals = [
-        //    //Needs to be changed to have schema
-        //    {title: 'Meal 1', id: 1},
-        //    {title: 'Meal 2', id: 2},
-        //    {title: 'Meal 3', id: 3},
-        //    {title: 'Meal 4', id: 4},
-        //    {title: 'Meal 5', id: 5},
-        //    {title: 'Meal 6', id: 6}
-        //];
+        //$scope.meals = Meals.all();
+        //
+        //$ionicModal.fromTemplateUrl('templates/meal.html', {
+        //    scope: $scope
+        //}).then(function (modal) {
+        //    $scope.modal = modal;
+        //});
+        //// Triggered in the product modal to close it
+        //$scope.closeModal = function () {
+        //    $scope.modal.hide();
+        //};
+        //
+        //$scope.doOrder = function () {
+        //    $state.go("app.orders");
+        //    $timeout(function () {
+        //        $scope.closeModal();
+        //    }, 1000);
+        //};
+        //
+        //// Click like product
+        //$scope.doLike = function () {
+        //    var btn_like = angular.element(document.querySelector('.product-like'));
+        //    btn_like.find('i').toggleClass('active');
+        //}
+        //// Open the product modal
+        //$scope.mealDetail = function ($id) {
+        //    $scope.meal = Meals.get($id);
+        //    $scope.modal.show();
+        //};
+        //
+        //$scope.goBack = function () {
+        //    window.history.back();
+        //};
     })
 
     .controller('MealCtrl', function ($scope, $stateParams) {
+
+
     })
 
-    .controller('LoginCtrl', ['Auth','$state','$location',function (Auth, $state, $location) {
+    .controller('LogoutCtrl', function (Auth, $scope, $ionicPopup, $state, $location, $ionicHistory) {
 
-        this.loginWithGoogle = function loginWithGoogle() {
-            Auth.$authWithOAuthPopup('google')
-                .then(function(authData) {
-                    $state.go($location.path('app/meals'));
+
+    })
+
+
+    .controller('LoginCtrl', ['Auth', 'FirebaseUrl', 'Users', '$state', '$location', '$scope', '$rootScope', '$firebaseAuth', '$window',
+        function (Auth, FirebaseUrl, Users, $state, $location, $scope, $rootScope, $firebaseAuth, $window) {
+
+            $scope.user = {
+                email: '',
+                password: ''
+            };
+
+            $scope.validateUser = function (user) {
+
+                $rootScope.show('Please wait.. Authenticating');
+                console.log('Please wait.. Authenticating');
+
+                var email = this.user.email;
+                var password = this.user.password;
+
+                /* Check user fields*/
+                if (!email || !password) {
+                    $rootScope.hide();
+                    $rootScope.notify('Error', 'Email or Password is incorrect!');
+                    return;
+                }
+
+                /* All good, let's authentify */
+                Auth.$authWithPassword({
+                    email: email,
+                    password: password
+                }).then(function (authData) {
+                    console.log(authData);
+                    //$rootScope.userEmail = user.email;
+                    //Users.setUser(user.email);
+                    $window.location.href = ('#/app/meals');
+                    $rootScope.hide();
+                }).catch(function (error) {
+                    console.log("Login Failed!", error);
+                    if (error.code == 'INVALID_EMAIL') {
+                        $rootScope.notify('Invalid Email Address');
+                    }
+                    else if (error.code == 'INVALID_PASSWORD') {
+                        $rootScope.notify('Invalid Password');
+                    }
+                    else if (error.code == 'INVALID_USER') {
+                        $rootScope.notify('Invalid User');
+                    }
+                    else {
+                        $rootScope.notify('Oops something went wrong. Please try again later');
+                    }
+                    $rootScope.hide();
+                    //$rootScope.notify('Error', 'Email or Password is incorrect!');
                 });
-        };
+            };
 
-    }])
+            $scope.loginWithGoogle = function () {
+                Auth.$authWithOAuthPopup('google')
+                    .then(function (authData) {
+                        $state.go($location.path('app/meals'));
+                    });
+            };
 
-    .controller('SignUpCtrl', function ($scope, $stateParams) {
-    })
+            $scope.loginWithFacebook = function () {
 
-    .controller('ProfileCtrl', function ($scope, $stateParams) {
-    })
+                Auth.$authWithOAuthPopup('facebook')
+                    .then(function (authData) {
+                        console.log(authData);
+                        console.log('user is created');
+                        var usersRef = new Firebase('https://foodsharingapp.firebaseio.com/users');
+                        var keyRef = usersRef.push({
+                            'uid': authData.facebook.id,
+                            'gender': authData.facebook.cachedUserProfile.gender,
+                            'firstname': authData.facebook.cachedUserProfile.first_name,
+                            'profile_pic': authData.facebook.profileImageURL,
+                            'lastname': authData.facebook.cachedUserProfile.last_name
+                        });
+                        var uidRef = new Firebase('https://foodsharingapp.firebaseio.com/uids/' + authData.facebook.id + '/' + keyRef.key());
+                        uidRef.set({'registered': true});
+                        $state.go($location.path('app/meals'));
+                    })
+                    .catch(function (error) {
+                        if (error.code === "TRANSPORT_UNAVAILABLE") {
+                            Auth.$authWithOAuthRedirect("facebook").then(function (authData) {
+                                // User successfully logged in. We can log to the console
+                                // since we’re using a popup here
+                                console.log(authData);
+                                var usersRef = new Firebase('https://foodsharingapp.firebaseio.com/users');
+                                var keyRef = usersRef.push({
+                                    'uid': authData.facebook.id,
+                                    'gender': authData.facebook.cachedUserProfile.gender,
+                                    'firstname': authData.facebook.cachedUserProfile.first_name,
+                                    'profile_pic': authData.facebook.profileImageURL,
+                                    'lastname': authData.facebook.cachedUserProfile.last_name
+                                });
+                                var uidRef = new Firebase('https://foodsharingapp.firebaseio.com/uids/' + user.uid + '/' + keyRef.key());
+                                uidRef.set({'registered': true});
+                                $state.go($location.path('app/meals'));
+                            });
+                        } else {
+                            // Another error occurred
+                            console.log(error);
+                        }
+
+                    });
+
+            };
+
+
+            ////This sets the user as user.
+            //Auth.$onAuth(function (AuthData) {
+            //    if (AuthData === null) {
+            //        console.log("Not logged in yet");
+            //    } else {
+            //        var uid = Auth.$getAuth().uid;
+            //        console.log(uid);
+            //        var uids = Users.allUIDs();
+            //        for (var i = 0; i < uids.length; i++) {
+            //            console.log(uids[i].id);
+            //            if (uids[i].id == uid) {
+            //                var userKeyRef = new Firebase(FirebaseUrl + "/uids/" + uids[i].id);
+            //                userKeyRef.once('value').then(function (snapshot) {
+            //                    key = snapshot.val();
+            //                    console.log('key is' + key)
+            //                }).then(function () {
+            //                    var user = new Firebase(FirebaseUrl + "/users/").child(key).val();
+            //                    console.log("Logged in as", AuthData.uid);
+            //                    user.$loaded().then(function (profile) {
+            //                        $window.localStorage['profile'] = profile;
+            //                    })
+            //                });
+            //                console.log(user);
+            //                console.log('User exists')
+            //                break;
+            //            }
+            //        }
+            //    }
+            //    //$rootScope.user = user; // This will display the user's name in our view
+            //});
+        }
+    ])
+
+    .controller('SignUpCtrl', [
+        '$scope', '$firebaseObject', 'FirebaseUrl', '$rootScope', '$firebaseAuth', '$window', 'Auth',
+        function ($scope, $firebaseObject, FirebaseUrl, $rootScope, $firebaseAuth, $window, Auth) {
+
+            $scope.user = {
+                firstname: '',
+                lastname: '',
+                email: "",
+                password: ""
+            };
+            $scope.createUser = function () {
+                var firstname = this.user.firstname;
+                var lastname = this.user.lastname;
+                var email = this.user.email;
+                var password = this.user.password;
+
+                if (!email || !password) {
+                    $rootScope.notify("Please enter valid credentials");
+                    return false;
+                }
+
+                $rootScope.show('Please wait.. Registering');
+                Auth.$createUser(
+                    {email: email, password: password})
+                    .then(function (authData) {
+                        console.log('user is created');
+                        $rootScope.hide();
+                        var userRef = new Firebase(FirebaseUrl).child('users').child(authData.uid);
+                        userRef.set({
+                            'uid': authData.uid,
+                            'email': email,
+                            'firstname': firstname,
+                            'lastname': lastname
+                        });
+                        $window.location.href = ('#/app/meals');
+                    }, function (error) {
+                        console.log('error unfortunately');
+                        $rootScope.hide();
+                        if (error.code == 'INVALID_EMAIL') {
+                            console.log('invalid email');
+                            $rootScope.notify('Invalid Email Address');
+                        }
+                        else if (error.code == 'EMAIL_TAKEN') {
+                            console.log('email taken');
+                            $rootScope.notify('Email Address already taken');
+                        }
+                        else {
+                            console.log('not sure what happened');
+                            $rootScope.notify('Oops something went wrong. Please try again later');
+                        }
+                    });
+
+            }
+
+            //This sets the user as user.
+            //Auth.$onAuth(function (authData) {
+            //    if (authData == null) {
+            //        console.log("Not logged in yet");
+            //    } else {
+            //        var currentUser = '';
+            //        angular.copy(authData, currentUser);
+            //        currentUser = $firebaseObject((FirebaseUrl).child('users').child(authData.uid));
+            //        currentUser.$loaded().then(function (profile) {
+            //            $window.localStorage['profile'] = profile;
+            //            console.log("Logged in as", $window.localStorage['profile'].firstname);
+            //        })
+            //    }
+            //});
+        }
+    ])
+
+    .controller('ProfileCtrl', [
+        '$scope', '$rootScope', '$firebaseAuth', '$firebaseArray', '$firebaseObject', '$window', 'md5','Auth', 'UIDs', 'Users', '$stateParams',
+        function ($scope, $rootScope, $firebaseAuth, $firebaseArray, $firebaseObject, $window,md5, Auth, UIDs, Users, $stateParams) {
+
+            var profileCtrl = this;
+            profileCtrl.profile = profile;
+
+            profileCtrl.updateProfile = function(){
+                profileCtrl.profile.emailHash = md5.createHash(auth.password.email);
+                profileCtrl.profile.$save();
+            };
+
+            $scope.user = Auth.user;
+
+        }
+    ])
+
+
     .controller('OrderCtrl', function ($scope, $stateParams) {
     })
     .controller('OrdersCtrl', function ($scope, $stateParams) {
     })
 
+    .controller('MarkerRemoveCtrl', function ($scope, $ionicLoading) {
+
+        $scope.positions = [{
+            lat: 43.07493,
+            lng: -89.381388
+        }];
+
+        $scope.$on('mapInitialized', function (event, map) {
+            $scope.map = map;
+        });
+
+        $scope.centerOnMe = function () {
+            $scope.positions = [];
+
+
+            $ionicLoading.show({
+                template: 'Loading...'
+            });
+
+
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                $scope.positions.push({lat: pos.k, lng: pos.B});
+                console.log(pos);
+                $scope.map.setCenter(pos);
+                $ionicLoading.hide();
+            });
+
+        };
+
+    })
+
     .controller('MapCtrl', function ($scope, $ionicLoading, $compile) {
-        function initialize() {
+
+        $scope.init = function () {
             var myLatlng = new google.maps.LatLng(43.07493, -89.381388);
 
             var mapOptions = {
@@ -163,9 +392,9 @@ angular.module('foodapp.controllers', [])
             });
 
             $scope.map = map;
-        }
+        };
 
-        google.maps.event.addDomListener(window, 'load', initialize);
+        // google.maps.event.addDomListener(window, 'load', initialize);
 
         $scope.centerOnMe = function () {
             if (!$scope.map) {
@@ -188,71 +417,106 @@ angular.module('foodapp.controllers', [])
         $scope.clickTest = function () {
             alert('Example of infowindow with ng-click')
         };
-
     })
 
+    .controller('AddCtrl', function (Users, $scope, $firebase, $stateParams, $ionicModal, $firebaseArray, $rootScope, $cordovaCamera) {
 
-    .controller('AddCtrl', function ($scope, $stateParams, $ionicModal, $firebaseArray, $cordovaCamera) {
-
-
-
-        //var orderArray = $firebaseArray(userReference.child("orders"));
-
-        $scope.upload = function() {
+        $scope.upload = function () {
             var options = {
-                quality : 75,
-                destinationType : Camera.DestinationType.DATA_URL,
-                sourceType : Camera.PictureSourceType.CAMERA,
-                allowEdit : true,
+                quality: 75,
+                destinationType: Camera.DestinationType.DATA_URL,
+                sourceType: Camera.PictureSourceType.CAMERA,
+                allowEdit: true,
                 encodingType: Camera.EncodingType.JPEG,
                 popoverOptions: CameraPopoverOptions,
                 targetWidth: 500,
                 targetHeight: 500,
                 saveToPhotoAlbum: false
             };
-            $cordovaCamera.getPicture(options).then(function(imageData) {
-                syncArray.$add({image: imageData}).then(function() {
+            $cordovaCamera.getPicture(options).then(function (imageData) {
+                syncArray.$add({image: imageData}).then(function () {
                     alert("Image has been uploaded");
                 });
-            }, function(error) {
+            }, function (error) {
                 console.error(error);
             });
         }
 
-        // array list which will contain the items added
-        $scope.toDoListItems = [];
+        //var ref = new Firebase('https://foodsharingapp.firebaseio.com/courses/');
+        //$scope.courses = $firebaseArray(ref);
 
-        //init the modal
-        $ionicModal.fromTemplateUrl('modal.html', {
-            scope: $scope,
-            animation: 'slide-in-up'
-        }).then(function (modal) {
-            $scope.modal = modal;
-        });
+        var firebaseObj = new Firebase("https://foodsharingapp.firebaseio.com/courses/");
+        var fb = $firebaseArray(firebaseObj);
 
-// function to open the modal
-        $scope.openModal = function () {
-            $scope.modal.show();
+        console.log($rootScope.user)
+
+        $scope.newMeal = {
+            name: "",
+            price: "",
+            ingredients: "",
+            description: "",
+            category: "",
+            cuisine: "",
+            userID: ""
         };
 
-// function to close the modal
-        $scope.closeModal = function () {
-            $scope.modal.hide();
-        };
+        $scope.categories = [
+            {id: 1, name: 'Breakfast'},
+            {id: 2, name: 'Lunch'},
+            {id: 3, name: 'Dinner'}
+        ];
 
-//Cleanup the modal when we're done with it!
-        $scope.$on('$destroy', function () {
-            $scope.modal.remove();
-        });
+        $scope.cuisines = [
+            {id: 1, name: 'Thai'},
+            {id: 2, name: 'Chinese'},
+            {id: 3, name: 'Italian'},
+            {id: 4, name: 'British'},
+            {id: 5, name: 'Spanish'},
+            {id: 6, name: 'Indian'},
+            {id: 7, name: 'French'},
+            {id: 8, name: 'Vietnamese'},
+            {id: 9, name: 'Nordic'}
+        ];
 
-//function to add items to the existing list
-        $scope.AddItem = function (data) {
-            $scope.toDoListItems.push({
-                task: data.newItem,
-                status: 'not done'
-            });
-            data.newItem = '';
-            $scope.closeModal();
+        $scope.submitMeal = function () {
+            if (angular.equals({}, $scope.newMeal)) {
+                alert("Your form is empty");
+                $rootScope.notify('Your form is empty')
+            } else {
+                console.log($scope.newMeal);
+                var name = $scope.newMeal.name;
+                var price = $scope.newMeal.price;
+                var ingredients = $scope.newMeal.ingredients;
+                var description = $scope.newMeal.description;
+                var category = $scope.newMeal.category;
+                var cuisine = $scope.newMeal.cuisine;
+
+                fb.$add({
+                    name: name,
+                    price: price,
+                    ingredients: ingredients,
+                    description: description,
+                    category: category,
+                    cuisine: cuisine,
+                    userID: $rootScope.user.uid
+                }).then(function (ref) {
+                    $scope.newMeal = {};
+                    console.log(ref);
+                }, function (error) {
+                    console.log("Error:", error);
+                });
+
+                //$scope.courses.$add
+                //    (
+                //        $scope.newMeal
+                //    )
+                //    .then(function (res) {
+                //        $scope.newMeal = {};
+                //    });
+
+                $rootScope.notify('New meal has been added!')
+            }
+
         };
     });
 

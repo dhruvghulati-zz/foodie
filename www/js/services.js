@@ -1,11 +1,193 @@
 /**
  * Created by dhruv on 19/03/2016.
  */
-var app = angular.module('foodapp.services', [])
+var app = angular.module('foodapp.services', ['firebase'])
 
-app.factory('Auth', ['rootRef', '$firebaseAuth',function(rootRef, $firebaseAuth){
+//http://learn.ionicframework.com/formulas/localstorage/ - do we need a lot of persistent data
+
+/**
+ * Authentication service
+ */
+
+app.factory('Auth', ['rootRef', '$firebaseObject', '$firebaseAuth', function (rootRef, $firebaseObject, $firebaseAuth) {
+
+    var auth = $firebaseAuth(rootRef);
+
     return $firebaseAuth(rootRef);
+
+    //var Auth = {
+    //    user: {},
+    //    login: function(user) {
+    //        return auth.$authWithPassword({
+    //            email: user.email,
+    //            password: user.password
+    //        });
+    //    },
+    //    signedIn: function(){
+    //        return !!Auth.user.provider;
+    //    },
+    //    logout: function () {
+    //        return auth.$unauth;
+    //    }
+    //}
+    //
+    //auth.$onAuth(function(authData){
+    //    if(authData){
+    //        angular.copy(authData, Auth.user);
+    //        Auth.user.profile = $firebaseObject(ref.child('profile').child(authData.uid));
+    //        Auth.user.profile.$loaded().then(function (profile) {
+    //            $window.localStorage['gym-key'] = profile.gym.toString();
+    //        });
+    //    }else{
+    //        if (Auth.user && Auth.user.profile) {
+    //            Auth.user.profile.$destroy();
+    //        }
+    //    }
+    //})
+
+  //return Auth;
 }]);
+
+
+/**
+ * Anything related to the Users array
+ */
+app.factory('Users', ['$firebaseArray','rootRef', '$firebaseObject', 'Auth', '$rootScope', function ($firebaseArray, rootRef,$firebaseObject, Auth, $rootScope) {
+
+    var usersRef = new Firebase(rootRef.child('users'));
+    var users = $firebaseArray(usersRef);
+    //var uids = $firebaseArray(ref.child('uids'));
+
+    //var user = '';
+
+    var Users = {
+        getProfile: function(uid){
+            return $firebaseObject(usersRef.child(uid));
+        },
+        getDisplayName: function(uid){
+            return users.$getRecord(uid).displayName;
+        },
+        getGravatar: function(uid){
+            return '//www.gravatar.com/avatar/' + users.$getRecord(uid).emailHash;
+        },
+        all: users
+    };
+
+    return Users;
+
+    //return {
+    //    all: function () {
+    //        return users;
+    //    },
+    //    allUIDs: function () {
+    //        return uids;
+    //    },
+    //    get: function (id) {
+    //        // Simple index lookup
+    //        return users[id];
+    //    },
+    //    getUser: function () {
+    //        // Simple index lookup
+    //        return $rootScope.user;
+    //    },
+    //    setUser: function (value) {
+    //        user = value;
+    //    }
+    //}
+
+}])
+
+
+app.factory('UIDs', ['$firebaseArray', function ($firebaseArray) {
+
+    var ref = new Firebase("https://foodsharingapp.firebaseio.com");
+
+
+    return {
+        all: function () {
+            return uids;
+        }
+    }
+}])
+
+app.service('LocationService', function ($q) {
+    var autocompleteService = new google.maps.places.AutocompleteService();
+    var detailsService = new google.maps.places.PlacesService(document.createElement("input"));
+    return {
+        searchAddress: function (input) {
+            var deferred = $q.defer();
+
+            autocompleteService.getPlacePredictions({
+                input: input
+            }, function (result, status) {
+                if (status == google.maps.places.PlacesServiceStatus.OK) {
+                    console.log(status);
+                    deferred.resolve(result);
+                } else {
+                    deferred.reject(status)
+                }
+            });
+
+            return deferred.promise;
+        },
+        getDetails: function (placeId) {
+            var deferred = $q.defer();
+            detailsService.getDetails({
+                placeId: placeId
+            }, function (result) {
+                deferred.resolve(result);
+            });
+            return deferred.promise;
+        }
+    };
+})
+
+app.directive('locationSuggestion', function ($ionicModal, LocationService) {
+    return {
+        restrict: 'A',
+        scope: {
+            location: '='
+        },
+        link: function ($scope, element) {
+            console.log('locationSuggestion started!');
+            $scope.search = {};
+            $scope.search.suggestions = [];
+            $scope.search.query = "";
+            $ionicModal.fromTemplateUrl('location.html', {
+                scope: $scope,
+                focusFirstInput: true
+            }).then(function (modal) {
+                $scope.modal = modal;
+            });
+            element[0].addEventListener('focus', function (event) {
+                $scope.open();
+            });
+            $scope.$watch('search.query', function (newValue) {
+                if (newValue) {
+                    LocationService.searchAddress(newValue).then(function (result) {
+                        $scope.search.error = null;
+                        $scope.search.suggestions = result;
+                    }, function (status) {
+                        $scope.search.error = "There was an error :( " + status;
+                    });
+                }
+                ;
+                $scope.open = function () {
+                    $scope.modal.show();
+                };
+                $scope.close = function () {
+                    $scope.modal.hide();
+                };
+                $scope.choosePlace = function (place) {
+                    LocationService.getDetails(place.place_id).then(function (location) {
+                        $scope.location = location;
+                        $scope.close();
+                    });
+                };
+            });
+        }
+    }
+})
 
 app.factory('Cates', function () {
     // Might use a resource here that returns a JSON array
@@ -58,7 +240,24 @@ app.factory('Cates', function () {
     };
 });
 
+app.factory('MealsFromDB', ['$firebaseArray', function ($firebaseArray) {
+
+    var ref = new Firebase("https://foodsharingapp.firebaseio.com");
+    var meals = $firebaseArray(ref.child('courses'));
+
+    return {
+        all: function () {
+            return meals;
+        },
+        get: function (id) {
+            // Simple index lookup
+            return meals[id];
+        }
+    }
+}])
+
 app.service('Meals', function () {
+
     var meals = [{
         id: 0,
         cateId: 0,

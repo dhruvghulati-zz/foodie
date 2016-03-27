@@ -1,44 +1,66 @@
-<ion-modal-view>
-    <ion-header-bar>
-        <div class="bar bar-header bar-calm">
-            <button class="button" ng-click="closeModal()">back</button>
-            <h1 class="title">Add Item</h1>
-        </div>
-    </ion-header-bar>
+<!--<ion-modal-view>-->
+    <!--<ion-header-bar>-->
+        <!--&lt;!&ndash;<div class="bar bar-header bar-calm">&ndash;&gt;-->
+            <!--&lt;!&ndash;<button class="button" ng-click="closeModal()">back</button>&ndash;&gt;-->
+            <!--&lt;!&ndash;<h1 class="title">Add Item</h1>&ndash;&gt;-->
+        <!--&lt;!&ndash;</div>&ndash;&gt;-->
+    <!--</ion-header-bar>-->
+<ion-view>
     <ion-content>
-            <button class="button button-block button-icon icon ion-camera" ng-click="upload()">
-                Upload Image
-            </button>
-        <form ng-submit="addCourse(data)">
+        <button class="button button-block button-icon icon ion-camera" ng-click="upload()">
+            Upload Image
+        </button>
+        <form>
             <div class="list">
                 <div class="list list-inset">
-                    <div class ="row">
-                        <div class="col">
-                            <label class="item item-input item-floating-label">
-                                <span class="input-label">Name</span>
-                                <input type="text" placeholder="Name">
-                            </label>
-                        </div>
-                        <div class="col">
-                            <label class="item item-input item-floating-label">
-                                <span class="input-label">Price</span>
-                                <input type="text" placeholder="Price">
-                            </label>
-                        </div>
+                    <div>
+                        <label class="item item-input item-floating-label">
+                            <span class="input-label">Name</span>
+                            <input type="text" placeholder="Name" ng-model="newMeal.name">
+                        </label>
+                    </div>
+                    <div>
+                        <label class="item item-input item-floating-label">
+                            <span class="input-label">Price</span>
+                            <input type="text" placeholder="Price" ng-model="newMeal.price">
+                        </label>
                     </div>
                     <label class="item item-input item-floating-label">
                         <span class="input-label">Ingredients</span>
-                        <input type="text" placeholder="Ingredients">
+                        <input type="text" placeholder="Ingredients" ng-model="newMeal.ingredients">
                     </label>
                     <label class="item item-input item-floating-label">
                         <span class="input-label">Description</span>
-                        <input type="text" placeholder="Description">
+                        <input type="text" placeholder="Description" ng-model="newMeal.description">
                     </label>
                 </div>
-                <button class="button button-block button-positive" type="submit">
-                    Add Course
-                </button>
+                <div class="list list-inset">
+                    <label class="item item-input item-select">
+                        <div class="input-label">
+                            Category
+                        </div>
+                        <select ng-model="newMeal.category" ng-options="category.name for category in categories">
+                            <option value="" ng-if="newMeal.category">&nbsp;</option>
+                        </select>
+                    </label>
+                    <label class="item item-input item-select">
+                        <div class="input-label">
+                            Cuisine
+                        </div>
+                        <select ng-model="newMeal.cuisine" ng-options="cuisine.name for cuisine in cuisines">
+                            <option value="" ng-if="newMeal.cuisine">&nbsp;</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="list list-inset">
+                    <button class="button button-block button-positive" ng-click="submitMeal()">
+                        Add Course
+                    </button>
+                </div>
+            </div>
             </div>
         </form>
     </ion-content>
-</ion-modal-view>
+</ion-view>
+
+<!--</ion-modal-view>-->
